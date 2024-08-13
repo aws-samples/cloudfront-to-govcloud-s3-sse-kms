@@ -1,15 +1,15 @@
 # Using Amazon CloudFront to Distribute GovCloud Amazon S3 (SSE-KMS) public files
 
-This solutions is to enable domain name file access to a Amazon Simple Storage Service (Amazon S3) bucket with SSE-KMS encryption located in a GovCloud region. In a standard commercial region implementation CloudFront would be setup to use Origin Access Control (OAC). OAC is not availabe from a commercial region to a GovCloud region. Access to the GovCloud S3 bucket can be granted via presigned URLs, using CloudFront in the commercial region to enable the use of a domain name and the other benefits of CloudFront.
+This solutions is to enable domain name file access to a [Amazon Simple Storage Service (Amazon S3)](https://aws.amazon.com/s3/) bucket with [SSE-KMS encryption](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html) located in a [GovCloud](https://aws.amazon.com/govcloud-us) region. In a standard [commercial region] (https://aws.amazon.com/about-aws/global-infrastructure/regions_az/) implementation [Amazon CloudFront](https://aws.amazon.com/cloudfront) would be setup to use [Origin Access Control (OAC)](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html). OAC is not availabe from a commercial region to a GovCloud region. Access to the GovCloud S3 bucket can be granted via presigned URLs, using CloudFront in the commercial region to enable the use of a domain name and the other benefits of CloudFront.
 
 ## Architecture
 <img alt="Architecture 2" src="./images/architecture.jpg" />
 
 1. The user will request a file using a standard domain URL hosted by Amazon CloudFront in Account 2 which is a commerical region.
-2. Amazon CloudFront will use a Lambda@Edge origin request and validate the currently URL.
+2. Amazon CloudFront will direct the request to the [Lambda@Edge](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html) origin request function.
 3. The Lambda@Edge function will retrieve the current GovCloud API Gateway endpoint from the AWS Systems Manager Parameter Store. 
-4. If the URL does not contain a 'X-Amz-Credential' parameter then the function will request a presigned URL from Account 1's Amazon API Gateway  hosted in a GovCloud region.
-5. The Amazon API Gateway calls an AWS Lambda function to create a presigned URL of the Amazon S3 bucket which is SSE-KMS encrypted.
+4. If the URL does not contain a 'X-Amz-Credential' parameter then the function will request a presigned URL from Account 1's [Amazon API Gateway](https://aws.amazon.com/api-gateway/) hosted in a GovCloud region.
+5. The Amazon API Gateway calls an [AWS Lambda](https://aws.amazon.com/pm/lambda) function to create a presigned URL of the Amazon S3 bucket which is SSE-KMS encrypted.
 6. The Lambda@Edge function rewrites the initial URL to include the presigned URL query parameters and finally returns a 302 redirect allowing the end user to view the file located in the GovCloud region S3 bucket of Account 1.
 
 ## Requirements
@@ -64,6 +64,7 @@ This solutions is to enable domain name file access to a Amazon Simple Storage S
 1. From the <b>root</b> folder change directories into the <b>account2-cloudfront</b> folder.
 2. Make sure to setup your AWS credentials to align with your commercial CloudFront account
 3. Run <b>`cdk destroy`</b>
+   - NOTE: if you get an error from CloudFormation deleting the Lambda@Edge function, then you should wait a while and then retry cdk destroy. [Reference documentation](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-delete-replicas.html).
 
 ## Security
 

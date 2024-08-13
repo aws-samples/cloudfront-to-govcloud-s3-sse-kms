@@ -9,6 +9,7 @@ import fs = require('fs');
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { Stack } from 'aws-cdk-lib';
 
 export class Account1GovcloudStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -61,7 +62,6 @@ export class Account1GovcloudStack extends cdk.Stack {
 
     // Create an API Gateway REST API
     const api = new apigw.RestApi(this, 'PresignedUrlApi', {
-      restApiName: 'Presigned URL API',
       description: 'API for generating presigned S3 URLs',
     });
 
@@ -86,8 +86,14 @@ export class Account1GovcloudStack extends cdk.Stack {
 
     // Output the bucket region
     new cdk.CfnOutput(this, 'BucketRegion', {
-      value: bucket.bucketRegionalDomainName,
+      value: Stack.of(this).region,
       description: 'The AWS region where the S3 bucket was created'
     });
+
+      // Output the bucket region
+      new cdk.CfnOutput(this, 'ExportHelper', {
+        value: '\nexport CDK_S3_BUCKET_NAME=' + `${bucket.bucketName}` + '\nexport CDK_S3_BUCKET_REGION=' + Stack.of(this).region + '\nexport CDK_PRESIGNED_URL=' + `${api.url.endsWith('/') ? api.url.slice(0, -1) : api.url}${presignedResource.path}`,
+        description: 'Export helper commands'
+      });
   }
 }
